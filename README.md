@@ -50,6 +50,8 @@ After the summarizer recommends a cut point, the extension validates it:
 - The retained tokens from that point onward must not exceed 15,000 estimated tokens. If they do, the extension finds the nearest valid cut point within the cap and uses that instead, prepending a `CUTPOINT ADJUSTMENT NOTE` to the checkpoint body explaining the adjustment.
 - If validation fails entirely, the extension falls back to Pi's default `firstKeptEntryId`.
 
+Pi's built-in compaction lobs off messages at a fixed token count — whatever fits gets kept, whatever doesn't goes. This extension lets the summarizer choose how many messages to retain based on what the next agent actually needs. Between tasks, it may keep just a few messages. Mid-task, it may keep many more. The goal is to retain only enough live context to clear the next hurdle — no more, no less.
+
 ### Checkpoint structure
 
 The output is an engineering handoff document with these required sections:
