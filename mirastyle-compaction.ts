@@ -824,7 +824,7 @@ function buildUserPrompt(input: {
 }): string {
 	const previousSection = input.previousSummary
 		? `<previous_checkpoint>\n${input.previousSummary}\n</previous_checkpoint>\n\n`
-		: "<previous_checkpoint>\nNone captured. This is the first compaction checkpoint.\n</previous_checkpoint>\n\n";
+		: "";
 
 	const customInstructionsSection = input.customInstructions?.trim()
 		? `<user_compaction_instructions priority="high" source="human">

@@ -14,7 +14,7 @@ Pi's core compaction mechanics are unchanged: the latest `CompactionEntry` summa
 
 The extension builds a prompt for a summarizer model containing:
 
-- **Previous checkpoint** (`<previous_checkpoint>`): If a prior compaction exists, its full body is included as frozen historical state to be evolved. On the first compaction, this section states that no previous checkpoint exists.
+- **Previous checkpoint** (`<previous_checkpoint>`): If a prior compaction exists, its full body is included as frozen historical state to be evolved. Omitted entirely on the first compaction.
 - **Custom instructions** (`<user_compaction_instructions>`): If the user provided `/compact ...` instructions, they are included with explicit high-priority framing. Omitted entirely if none were given.
 - **Deterministic metadata** (`<deterministic_metadata>`): Session file path, token count at compaction, split-turn flag, read-only files, modified files, git snapshot (branch, scoped status, scoped diff stat), and retained message count. Git fields are omitted when there is no repository.
 - **New history** (`<new_history_to_compact>`): All session entries since the last compaction boundary, serialized with entry IDs and `valid_cutpoint` flags. Only entries that will be replaced by this checkpoint go here.
