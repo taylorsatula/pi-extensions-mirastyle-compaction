@@ -265,13 +265,6 @@ function computeFileLists(fileOps: FileOps): {
 	return { readFiles, modifiedFiles };
 }
 
-function truncateDisplayField(text: string, maxChars: number): string {
-	const trimmed = text.trim();
-	if (trimmed.length <= maxChars) {
-		return trimmed;
-	}
-	return `${trimmed.slice(0, maxChars)}\n[truncated ${trimmed.length - maxChars} chars]`;
-}
 function timestampMillis(timestamp: string): number {
 	const parsed = new Date(timestamp).getTime();
 	return Number.isNaN(parsed) ? Date.now() : parsed;
@@ -1175,10 +1168,6 @@ function parseReply(text: string): SummarizerReply | undefined {
 	return cut === undefined ? { reasoning, condense, body } : { cut, reasoning, condense, body };
 }
 
-/** Extract the raw working state from a previous compaction's details, when present. */
-function previousWorkingState(branchEntries: SessionEntry[]): string | undefined {
-	return previousCompactionDetails(branchEntries)?.workingState;
-}
 function computedFactsBlock(input: {
 	words: string[];
 	git: GitFacts;
