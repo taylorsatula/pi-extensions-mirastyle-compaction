@@ -1910,7 +1910,21 @@ export default function (pi: ExtensionAPI) {
 		if (event.outcome !== "completed") {
 			return undefined;
 		}
+		try {
+			return await compactAtSettle(pi, ctx);
+		} catch (error) {
+			// Never strand or crash the run over a compaction; the run settles normally.
+			notifyUi(
+				ctx,
+				`${EXTENSION_NAME}: automatic compaction skipped (${error instanceof Error ? error.message : String(error)})`,
+				"warning",
+			);
+			return undefined;
+		}
 
+	});
+
+	async function compactAtSettle(pi: ExtensionAPI, ctx: ExtensionContext) {
 		const branchEntries = ctx.sessionManager.getBranch();
 		if (branchEntries.length === 0) {
 			return undefined;
@@ -1956,7 +1970,7 @@ export default function (pi: ExtensionAPI) {
 			},
 		];
 		return { entries: drafts, continue: true };
-	});
+	}
 
 	pi.on("session_compact_failed", (event, ctx) => {
 		resetCycle();
