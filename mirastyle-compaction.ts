@@ -954,7 +954,7 @@ function renderCheckpoint(input: RenderCheckpointInput): string {
 			"",
 			"## Repository, computed at compaction",
 			...repositoryLines(input.git),
-			`${input.git.commitsSincePrevious ? "Commits since the last compaction" : "Most recent commits"} (${input.git.commitTotal}${input.git.commitsSincePrevious ? " since then" : ""}; \`git log\` shows them all):`,
+			`${input.git.commitsSincePrevious ? "Commits since the last compaction" : "Most recent commits"} (${input.git.commitTotal}; \`git log\` shows them all):`,
 			...listedSheddable(commitList, omitted, "- none yet"),
 			`Files changed vs origin/${input.git.baseKnown ? input.git.base : "?"} merge-base (${input.git.filesTotal}; \`git diff --stat\` shows them):`,
 			...listedSheddable(fileList, omitted, "- none yet"),
