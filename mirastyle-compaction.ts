@@ -34,7 +34,6 @@
  * Pi's default compaction runs.
  */
 
-import { isAbsolute, relative, resolve as resolveFsPath } from "node:path";
 import { completeSimple } from "@earendil-works/pi-ai/compat";
 import {
 	estimateTokens,
@@ -58,7 +57,6 @@ const DEFAULT_SUMMARIZER_MODEL_ID = "";
 /** The most the summarizer may write. */
 const MAX_SUMMARY_OUTPUT_TOKENS = 12_000;
 const GIT_COMMAND_TIMEOUT_MS = 5_000;
-const MAX_GIT_FIELD_CHARS = 4_000;
 const MAX_MODEL_SELECTED_RETAINED_TOKENS = 15_000;
 
 /** Compaction cycle trigger, as proportions of the session model's context window. */
