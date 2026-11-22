@@ -50,7 +50,6 @@ import { Type } from "typebox";
 const EXTENSION_NAME = "mirastyle-compaction";
 const SUMMARY_VERSION = 2;
 const CUSTOM_MESSAGE_TYPE = "mirastyle-compaction";
-const CHECKPOINT_HEADER = "HISTORICAL CHECKPOINT.";
 
 // Leave blank to use the active session model by default.
 const DEFAULT_SUMMARIZER_PROVIDER = "";
@@ -472,6 +471,19 @@ function computeFileOpsForCutpoint(branchEntries: SessionEntry[], firstKeptEntry
 	mergeFileOps(allFileOps, compactedFileOps);
 	mergeFileOps(allFileOps, retainedFileOps);
 	return { compactedFileOps, retainedFileOps, allFileOps };
+}
+
+/** Pi-style default kept range for a compaction we run ourselves: walk back from the newest entry, cutting at the first valid cutpoint once ~25% of the window is accumulated. */
+function findDefaultKeptId(branchEntries: SessionEntry[], window: number): string | undefined {
+	const keepRecentTokens = Math.round(window * 0.25);
+	let tokens = 0;
+	for (let i = branchEntries.length - 1; i >= 0; i--) {
+		tokens += estimateEntryTokens(branchEntries[i]);
+		if (tokens >= keepRecentTokens && isValidCutpointEntry(branchEntries[i])) {
+			return branchEntries[i].id;
+		}
+	}
+	return branchEntries.find(isValidCutpointEntry)?.id;
 }
 
 function estimateEntryTokens(entry: SessionEntry): number {
@@ -935,7 +947,7 @@ function renderCheckpoint(input: RenderCheckpointInput): string {
 
 	const facts = (): string =>
 		[
-			`${CHECKPOINT_HEADER} mirastyle-compaction compacted this session's earlier context into checkpoint ${input.number}, at ${new Date(input.at).toISOString()}. The files on disk and the messages after this checkpoint are newer than it: where they disagree with it, they win.`,
+			`mirastyle-compaction compacted this session's earlier context into checkpoint ${input.number}, at ${new Date(input.at).toISOString()}. The files on disk and the messages after this checkpoint are newer than it: where they disagree with it, they win.`,
 			"",
 			"## Before you act",
 			"1. Re-establish ground truth: run `git status` and `git log --oneline -10`, and compare them with the work queue below.",
@@ -1470,7 +1482,7 @@ async function resolveModelAuth(
 					selectionReason: "configured",
 				};
 			}
-			notifyUi(ctx, `${EXTENSION_NAME}: configured model auth failed (${auth.error}); trying active model`, "warning");
+			notifyUi(ctx, `${EXTENSION_NAME}: configured model auth failed (${(auth as { error?: string }).error ?? "unknown error"}); trying active model`, "warning");
 		}
 	} else if (provider || modelId) {
 		notifyUi(
@@ -1487,7 +1499,7 @@ async function resolveModelAuth(
 
 	const activeAuth = await ctx.modelRegistry.getApiKeyAndHeaders(ctx.model);
 	if (!activeAuth.ok) {
-		notifyUi(ctx, `${EXTENSION_NAME}: active model auth failed (${activeAuth.error}); using Pi default compaction`, "warning");
+		notifyUi(ctx, `${EXTENSION_NAME}: active model auth failed (${(activeAuth as { error?: string }).error ?? "unknown error"}); using Pi default compaction`, "warning");
 		return undefined;
 	}
 
@@ -1904,11 +1916,10 @@ export default function (pi: ExtensionAPI) {
 			return undefined;
 		}
 		const tokensBefore = ctx.getContextUsage()?.tokens ?? 0;
-		// Our own cycle has no Pi-computed preparation: fall back to the earliest valid cut
-		// that fits the retained-token cap (normally the summarizer chooses the cut anyway).
-		const allValid = new Set(branchEntries.filter(isValidCutpointEntry).map((entry) => entry.id));
-		const fallbackCut =
-			findCappedCutpointId(branchEntries, allValid) ?? branchEntries.filter(isValidCutpointEntry).at(-1)?.id;
+		// Our own cycle has no Pi-computed preparation: mirror Pi's default kept range
+		// (~25% of the window) so the summarizer sees and may recommend any of it.
+		const window = ctx.model?.contextWindow ?? DEFAULT_WINDOW;
+		const fallbackCut = findDefaultKeptId(branchEntries, window);
 		if (fallbackCut === undefined) {
 			return undefined;
 		}
